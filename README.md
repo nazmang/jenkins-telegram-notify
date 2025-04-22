@@ -26,7 +26,7 @@ This project is a custom Groovy Shared Library for sending Telegram notification
 ## Example pipeline
 
   ```groovy
-@Library('my-shared-lib') _
+@Library('jenkins-telegram-notify') _
 
 def deployExecuted = false
 
@@ -50,6 +50,14 @@ pipeline {
         stage('Deploy') {
             
             steps {
+                script {
+                    sh """
+                        echo 'Deploying...'
+                    """
+                }
+                script {
+                    deployExecuted = true
+                }
                 script {                    
                     echo "Deploy executed: ${deployExecuted}"
                 }
