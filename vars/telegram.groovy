@@ -1,0 +1,48 @@
+// vars/telegram.groovy
+
+/**
+ * Sends a message to Telegram.
+ * @param botToken Telegram bot token
+ * @param chatId Telegram chat ID
+ * @param message Message text
+ * @param parseMode Formatting mode (by default MarkdownV2)
+ */
+def sendMessage(String botToken, String chatId, String message, String parseMode = 'MarkdownV2') {
+    def escapedMessage
+    // Escape special characters for MarkdownV2
+    if (parseMode == 'MarkdownV2') {
+        escapedMessage = escapeMarkdownV2(message)
+    } else {
+        escapedMessage = message    
+    }
+    def url = "https://api.telegram.org/bot${botToken}/sendMessage"
+    def payload = [
+        chat_id: chatId,
+        text: escapedMessage,
+        parse_mode: parseMode
+    ]
+    
+    // Выполняем HTTP-запрос через curl
+    def response = sh(script: """
+        curl -s -X POST '${url}' \
+        -d 'chat_id=${chatId}' \
+        -d 'text=${escapedMessage}' \
+        -d 'parse_mode=${parseMode}'
+    """, returnStdout: true).trim()
+    
+    echo "Telegram response: ${response}"
+}
+
+/** 
+ * Escapes special characters for MarkdownV2
+ * @param text Source text
+ * @return Escaped text
+ */
+private String escapeMarkdownV2(String text) {
+    def specialChars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+    def escapedText = text
+    specialChars.each { ch ->
+        escapedText = escapedText.replace(ch, "\\${ch}")
+    }
+    return escapedText
+}
