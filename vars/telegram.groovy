@@ -22,11 +22,11 @@ def sendMessage(String botToken, String chatId, String message, String parseMode
         parse_mode: parseMode
     ]
     
-    // Выполняем HTTP-запрос через curl
+    // Perform HTTP-request using curl
     def response = sh(script: """
         curl -s -X POST '${url}' \
         -d 'chat_id=${chatId}' \
-        -d 'text=${escapedMessage}' \
+        -d 'text="${escapedMessage}"' \
         -d 'parse_mode=${parseMode}'
     """, returnStdout: true).trim()
     
