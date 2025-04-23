@@ -8,31 +8,25 @@
  * @param parseMode Formatting mode (by default MarkdownV2)
  */
 def sendMessage(String botToken, String chatId, String message, String parseMode = 'MarkdownV2') {
-    def escapedMessage
-    // Escape special characters for MarkdownV2
-    if (parseMode == 'MarkdownV2') {
-        escapedMessage = escapeMarkdownV2(message)
-    } else {
-        escapedMessage = message    
+    try {
+        def escapedMessage
+        if (parseMode == 'MarkdownV2') {
+            escapedMessage = escapeMarkdownV2(message)
+        } else {
+            escapedMessage = message    
+        }
+        def url = "https://api.telegram.org/bot${botToken}/sendMessage"
+        def response = sh(script: """
+            curl -s -X POST '${url}' \
+            -d 'chat_id=${chatId}' \
+            -d 'text=${escapedMessage}' \
+            -d 'parse_mode=${parseMode}'
+        """, returnStdout: true).trim()
+        echo "Telegram response: ${response}"
+    } catch (Exception e) {
+        echo "Failed to send Telegram message: ${e.message}"
     }
-    def url = "https://api.telegram.org/bot${botToken}/sendMessage"
-    def payload = [
-        chat_id: chatId,
-        text: escapedMessage,
-        parse_mode: parseMode
-    ]
-    
-    // Perform HTTP-request using curl
-    def response = sh(script: """
-        curl -s -X POST '${url}' \
-        -d 'chat_id=${chatId}' \
-        -d 'text="${escapedMessage}"' \
-        -d 'parse_mode=${parseMode}'
-    """, returnStdout: true).trim()
-    
-    echo "Telegram response: ${response}"
 }
-
 /** 
  * Escapes special characters for MarkdownV2
  * @param text Source text
