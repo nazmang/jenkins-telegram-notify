@@ -142,66 +142,47 @@ private String escapeHTML(String text) {
     if (text == null) {
         return ''
     }
-    // First, protect valid HTML tags by replacing them with placeholders
+    
+    // For Telegram HTML mode, we need to:
+    // 1. Escape & to &amp; in content (but not if already escaped)
+    // 2. Escape < and > in content (but NOT in HTML tags)
+    // 3. Preserve valid HTML tags
+    
     def patterns = [:]
     def placeholderIndex = 0
     
-    // Protect complete HTML tags with content: <tag>content</tag>
-    // Match any valid Telegram HTML tag: b, strong, i, em, u, ins, s, strike, del, code, pre, a
-    // Use non-greedy matching to handle multiple tags
-    // Match each tag type separately to ensure opening and closing tags match
+    // Match complete HTML tags with content: <tag>content</tag>
+    // Match each tag type separately to handle content properly
     def tagTypes = ['b', 'strong', 'i', 'em', 'u', 'ins', 's', 'strike', 'del', 'code', 'pre']
     tagTypes.each { tag ->
         text = text.replaceAll(/<${tag}>([\s\S]*?)<\/${tag}>/) { match, content ->
             def placeholder = "___HTML_PLACEHOLDER_${placeholderIndex}___"
-            patterns[placeholder] = "<${tag}>${escapeHTMLContent(content)}</${tag}>"
+            // Escape content inside tags
+            def escapedContent = escapeHTMLContent(content)
+            patterns[placeholder] = "<${tag}>${escapedContent}</${tag}>"
             placeholderIndex++
             return placeholder
         }
     }
+    
     // Handle anchor tags separately (they have attributes)
-    text = text.replaceAll(/<a\s+[^>]*>([\s\S]*?)<\/a>/) { match, content ->
+    text = text.replaceAll(/<a\s+([^>]*)>([\s\S]*?)<\/a>/) { match, attrs, content ->
         def placeholder = "___HTML_PLACEHOLDER_${placeholderIndex}___"
-        // Extract the opening tag from the full match
-        def openTagMatch = (match =~ /<a\s+[^>]*>/)
-        def openTag = openTagMatch ? openTagMatch[0] : '<a>'
-        patterns[placeholder] = "${openTag}${escapeHTMLContent(content)}</a>"
+        // Escape content inside tags
+        def escapedContent = escapeHTMLContent(content)
+        patterns[placeholder] = "<a ${attrs}>${escapedContent}</a>"
         placeholderIndex++
         return placeholder
     }
     
-    // Protect self-closing tags: <tag/>
-    text = text.replaceAll(/<(b|strong|i|em|u|ins|s|strike|del|code|pre|a\s+[^>]+)\s*\/>/) { match, tag ->
-        def placeholder = "___HTML_PLACEHOLDER_${placeholderIndex}___"
-        patterns[placeholder] = "<${tag}/>"
-        placeholderIndex++
-        return placeholder
-    }
-    
-    // Protect standalone opening tags: <tag>
-    text = text.replaceAll(/<(b|strong|i|em|u|ins|s|strike|del|code|pre|a\s+[^>]+)>/) { match, tag ->
-        def placeholder = "___HTML_PLACEHOLDER_${placeholderIndex}___"
-        patterns[placeholder] = "<${tag}>"
-        placeholderIndex++
-        return placeholder
-    }
-    
-    // Protect standalone closing tags: </tag>
-    text = text.replaceAll(/<\/(b|strong|i|em|u|ins|s|strike|del|code|pre|a)>/) { match, tag ->
-        def placeholder = "___HTML_PLACEHOLDER_${placeholderIndex}___"
-        patterns[placeholder] = "</${tag}>"
-        placeholderIndex++
-        return placeholder
-    }
-    
-    // Now escape all remaining special characters
+    // Now escape special characters in the remaining text (outside of tags)
     // Escape & first (but not if already part of an entity)
     text = text.replaceAll(/&(?!amp;|lt;|gt;|quot;|#\d+;|#x[0-9a-fA-F]+;)/, '&amp;')
     // Escape < and > that are not part of protected tags
     text = text.replace('<', '&lt;')
     text = text.replace('>', '&gt;')
     
-    // Restore protected patterns
+    // Restore protected HTML tags with escaped content
     patterns.each { placeholder, value ->
         text = text.replace(placeholder, value)
     }
@@ -221,8 +202,7 @@ private String escapeHTMLContent(String text) {
     }
     // Escape & first (but not if already part of an entity)
     text = text.replaceAll(/&(?!amp;|lt;|gt;|quot;|#\d+;|#x[0-9a-fA-F]+;)/, '&amp;')
-    // Escape < and > in content (but preserve HTML tags if nested)
-    // For nested tags, we need to escape them too
+    // Escape < and > in content
     text = text.replace('<', '&lt;')
     text = text.replace('>', '&gt;')
     return text
