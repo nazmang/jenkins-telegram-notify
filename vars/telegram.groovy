@@ -9,6 +9,10 @@
  */
 def sendMessage(String botToken, String chatId, String message, String parseMode = 'MarkdownV2') {
     try {
+        // Handle null or empty message
+        if (message == null) {
+            message = ''
+        }
         def escapedMessage
         if (parseMode == 'MarkdownV2') {
             escapedMessage = escapeMarkdownV2(message)
@@ -36,6 +40,10 @@ def sendMessage(String botToken, String chatId, String message, String parseMode
  * @return Escaped text
  */
 private String escapeMarkdownV2(String text) {
+    // Handle null or empty text
+    if (text == null) {
+        return ''
+    }
     // Characters that need escaping in MarkdownV2 (but not if part of formatting)
     // We'll use a regex-based approach to preserve formatting patterns
     
@@ -111,6 +119,10 @@ private String escapeMarkdownV2(String text) {
  * @return Escaped text
  */
 private String escapeMarkdownV2Content(String text) {
+    // Handle null or empty text
+    if (text == null) {
+        return ''
+    }
     def specialChars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
     def escapedText = text
     specialChars.each { ch ->
@@ -126,6 +138,10 @@ private String escapeMarkdownV2Content(String text) {
  * @return Escaped text
  */
 private String escapeHTML(String text) {
+    // Handle null or empty text
+    if (text == null) {
+        return ''
+    }
     // First, protect valid HTML tags by replacing them with placeholders
     def patterns = [:]
     def placeholderIndex = 0
@@ -199,6 +215,10 @@ private String escapeHTML(String text) {
  * @return Escaped text
  */
 private String escapeHTMLContent(String text) {
+    // Handle null or empty text
+    if (text == null) {
+        return ''
+    }
     // Escape & first (but not if already part of an entity)
     text = text.replaceAll(/&(?!amp;|lt;|gt;|quot;|#\d+;|#x[0-9a-fA-F]+;)/, '&amp;')
     // Escape < and > in content (but preserve HTML tags if nested)
