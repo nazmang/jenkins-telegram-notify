@@ -12,6 +12,8 @@ def sendMessage(String botToken, String chatId, String message, String parseMode
         def escapedMessage
         if (parseMode == 'MarkdownV2') {
             escapedMessage = escapeMarkdownV2(message)
+        } else if (parseMode == 'HTML') {
+            escapedMessage = escapeHTML(message)
         } else {
             escapedMessage = message    
         }
@@ -39,4 +41,16 @@ private String escapeMarkdownV2(String text) {
         escapedText = escapedText.replace(ch, "\\${ch}")
     }
     return escapedText
+}
+
+/** 
+ * Escapes special characters for HTML
+ * @param text Source text
+ * @return Escaped text
+ */
+private String escapeHTML(String text) {
+    return text
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
 }
